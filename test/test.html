@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Test Selector</title>
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+		}
+
+		#result {
+			font-size: 20px;
+			width: 80%;
+			margin: 10px auto;
+			padding-top: 20px;
+		}
+
+		.pass {
+			color: #0b5;
+		}
+
+		.fail {
+			color: #f00;
+		}
+	</style>
+	<script type="text/javascript" src="../parse.js"></script>
+	<script type="text/javascript" src="../test.js"></script>
+</head>
+<body>
+	<div class="hey">
+		<span id="test" title="haha,i'm a title!lalala~@wuhaha.a]a~~en heng">
+			<i class="abc">Yes!</i>
+		</span>
+	</div>
+	<p title="haha,another title">
+		Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+		tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+		quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+		consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+		cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+		proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	</p>
+
+	<div id="result"></div>
+	<script type="text/javascript">
+		Test('#test .abc', [
+				{
+					action: 'id',
+					tokens: ['test']
+				}, {
+					action: 'decendent',
+					tokens: []
+				}, {
+					action: 'class',
+					tokens: ['abc']
+				}
+			]);
+
+		Test('#test i', [
+				{
+					action: 'id',
+					tokens: ['test']
+				}, {
+					action: 'decendent',
+					tokens: []
+				}, {
+					action: 'tag',
+					tokens: ['i']
+				}
+			]);
+
+		Test(' div span .abc', [
+				{
+					action: 'tag',
+					tokens: ['div']
+				}, {
+					action: 'decendent',
+					tokens: []
+				}, {
+					action: 'tag',
+					tokens: ['span']
+				}, {
+					action: 'decendent',
+					tokens: []
+				}, {
+					action: 'class',
+					tokens: ['abc']
+				}
+			]);
+
+		Test('[title^="haha"]', [
+				{
+					action: 'begin-with-attribute',
+					tokens: ['title', 'haha']
+				}
+			]);
+
+		Test('[title="haha"]', [
+				{
+					action: 'equal-attribute',
+					tokens: ['title', 'haha']
+				}
+			]);
+
+		Test('[title="haha,i\'m a title!lalala~@wuhaha.a]a~~en heng"] i.abc', [
+				{
+					action: 'equal-attribute',
+					tokens: ['title', 'haha,i\'m a title!lalala~@wuhaha.a]a~~en heng']
+				}, {
+					action: 'decendent',
+					tokens: []
+				}, {
+					action: 'tag',
+					tokens: ['i']
+				}, {
+					action: 'class',
+					tokens: ['abc']
+				}
+			]);
+	</script>
+</body>
+</html>
