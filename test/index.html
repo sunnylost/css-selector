@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Test Selector</title>
+	<script type="text/javascript" src="../parse.js"></script>
+</head>
+<body>
+	<div class="hey">
+		<span id="test" title="haha,i'm a title!lalala~@wuhaha.a]a~~en heng">
+			<i class="abc">Yes!</i>
+		</span>
+	</div>
+	<p title="haha,another title">
+		Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+		tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+		quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+		consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+		cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+		proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	</p>
+
+	<div id="result"></div>
+	<script type="text/javascript">
+		//s('#test .abc');
+		//s('#test i')
+		//s('[title="haha,i\'m a title!lalala~@wuhaha.a]a~~en heng"] i.abc');
+		//s('[title^="haha"]');
+		//s(' div span .abc');
+		//parse(' div span .abc');
+		//parse('[title^="haha"]');
+		parse('[title="haha"]');
+		parse('[title="haha,i\'m a title!lalala~@wuhaha.a]a~~en heng"] i.abc');
+	</script>
+</body>
+</html>
