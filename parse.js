@@ -165,6 +165,16 @@
 						}
 						st = tmp.next;
 						action = tmp.action;
+					} else if(c == '[') {
+						if(action) {
+							result.push({
+								action: action,
+								tokens: tokens
+							})
+						}
+						st = 'NeedAttributeIdentifier';
+						action = 'has-attribute';
+						tokens = [];
 					} else {
 						throw Error(c + ' is not a valid identifier.')
 					}
