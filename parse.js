@@ -138,7 +138,7 @@
 
 						result.push({
 							action: action,
-							tokens: tokens
+							tokens: [tokens.join('')]
 						});
 
 						result.push({
@@ -194,9 +194,8 @@
 						action = 'equal-attribute';
 						tokens = [tokens.join('')];
 						st = 'NeedBeginQuoteSign';
-					} else if(c == '"') { // end quote sign
-						tokens = [tokens.shift(), tokens.join('')];
-						st = 'AfterEndQuote';
+					} else if(c == '"') {
+						throw Error(c + ' cannot appear here, need identifier at position ' + i);
 					} else if(c == ']') {
 						st = 'Start';
 					} else if(tmp = attributeFilters[c]) {
@@ -281,7 +280,7 @@
 		if(action) {
 			result.push({
 				action: action,
-				tokens: tokens
+				tokens: [tokens.join('')]
 			})
 		}
 		log(result)

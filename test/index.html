@@ -22,15 +22,20 @@
 
 	<div id="result"></div>
 	<script type="text/javascript">
-		//s('#test .abc');
-		//s('#test i')
-		//s('[title="haha,i\'m a title!lalala~@wuhaha.a]a~~en heng"] i.abc');
-		//s('[title^="haha"]');
-		//s(' div span .abc');
-		//parse(' div span .abc');
-		//parse('[title^="haha"]');
+		parse('#test .abc');
+		parse('#test i')
+		parse(' div span .abc');
+		parse('[title^="haha"]');
 		parse('[title="haha"]');
 		parse('[title="haha,i\'m a title!lalala~@wuhaha.a]a~~en heng"] i.abc');
+
+		//Test Error
+		//parse('["haha]');
+		//parse('[haha"]');
+		//parse('[="234"]');
+
+		//TODO
+		//parse('[haha]');
 	</script>
 </body>
 </html>
