@@ -151,7 +151,10 @@
 					} else if(c == '*') {
 						st = 'BlankAfterStar';
 						action = 'find-all';
-					} else {
+					} else if(c == ':') {
+						st = 'InPesudo';
+						action && pushResult();
+					}  else {
 						throw Error(c + ' is not a valid identifier.')
 					}
 					break;
@@ -177,6 +180,9 @@
 						action && pushResult();
 						st = 'NeedAttributeIdentifier';
 						action = 'has-attribute';
+					}  else if(c == ':') {
+						st = 'InPesudo';
+						action && pushResult();
 					} else {
 						throw Error(c + ' is not a valid identifier.')
 					}
@@ -294,15 +300,36 @@
 						throw Error('Need a ] at position ' + i);
 					}
 					break;
+
+				case 'InPesudo':
+					if(rblank.test(c)) {
+						action = tokens.join('');
+						pushResult();
+						st = 'Start';
+					} else if(ridentifier.test(c)) {
+						action += c
+					} else if(c == ':') {
+						st = 'InPesudoElement';
+					} else if(c == '(') {
+						st = 'InFunction';
+					}
+					break;
+
+				case 'InPesudoElement':
+					break;
+
+				case 'InFunction':
+					if(c == ')') {
+						pushResult();
+						st = 'Start';
+					} else if(ridentifier.test(c)) {
+						tokens.push(c);
+					}
+					break;
 			}
 		}
 
-		if(action) {
-			result.push({
-				action: action,
-				tokens: [tokens.join('')]
-			})
-		}
+		action && pushResult();
 		log(result);
 		return result;
 	}
