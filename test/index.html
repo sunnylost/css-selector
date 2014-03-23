@@ -30,7 +30,15 @@
 		//parse('[="234"]');
 
 		//TODO
-		parse('E[foo]')
+
+		//parse('E /foo/ F');
+		//parse('!E > F');
+
+		//parse('F || E');
+		//parse('E:not(s1, s2)');
+		//parse('E:matches(s1, s2)');
+		parse('E:first-of-type');
+		parse('E:dir(ltr)');
 	</script>
 </body>
 </html>

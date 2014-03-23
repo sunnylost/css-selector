@@ -66,6 +66,8 @@
 		console.log.apply(console, arguments);
 	}
 
+
+
 	function parse(s) {
 		s = s.trim();
 
@@ -75,6 +77,18 @@
 			tokens = [],
 			action = '',
 			result = [];
+
+		function pushResult(notReset) {
+			result.push({
+				action: action,
+				tokens: tokens.length ? [tokens.join('')] : []
+			})
+
+			if(notReset) return;
+
+			action = '';
+			tokens = [];
+		}
 
 		for(var i = 0, len = s.length; i < len; i++) {
 			c = s[i];
@@ -96,6 +110,9 @@
 					} else if(c == '*') {
 						st = 'BlankAfterStar';
 						action = 'find-all';
+					} else if(c == ':') {
+						st = 'InPesudo';
+						action && pushResult();
 					} else {
 						throw Error(c + ' is not a valid identifier.')
 					}
@@ -110,21 +127,23 @@
 						st = 'Start';
 						if(action != 'decendent') {
 							action = 'decendent';
-							result.push({
-								action: action,
-								tokens: []
-							})
+							pushResult(true);
 						}
-					} else if((tmp = selectors[c]) || (tmp = combinators[c])) {
-						if(action) {
-							result.push({
-								action: action,
-								tokens: tokens
-							})
-							tokens = [];
-						}
+					} else if(tmp = selectors[c]) {
+						action && pushResult();
+
 						st = tmp.next;
 						action = tmp.action;
+					} else if(tmp = combinators[c]) {
+						action && pushResult();
+
+						st = tmp.next;
+
+						var prev = result[result.length - 1];
+						if(prev && prev.action == 'decendent') {
+							result.pop();
+						}
+						pushResult();
 					} else if(c == '[') {
 						st = 'NeedAttributeIdentifier';
 						action = 'has-attribute';
@@ -143,38 +162,21 @@
 					} else if(rblank.test(c)) {
 						st = 'Start';
 
-						result.push({
-							action: action,
-							tokens: [tokens.join('')]
-						});
+						pushResult()
 
 						result.push({
 							action: 'decendent',
 							tokens: []
 						});
 
-						tokens = [];
-						action = '';
 					} else if(tmp = selectors[c]) {
-						if(action) {
-							result.push({
-								action: action,
-								tokens: [tokens.join('')]
-							})
-							tokens = [];
-						}
+						action && pushResult();
 						st = tmp.next;
 						action = tmp.action;
 					} else if(c == '[') {
-						if(action) {
-							result.push({
-								action: action,
-								tokens: tokens
-							})
-						}
+						action && pushResult();
 						st = 'NeedAttributeIdentifier';
 						action = 'has-attribute';
-						tokens = [];
 					} else {
 						throw Error(c + ' is not a valid identifier.')
 					}
@@ -185,12 +187,8 @@
 					if(rblank.test(c)) {
 						st = 'Start';
 					} else if(ridentifier.test(c)) {
-						result.push({
-							action: action,
-							tokens: []
-						})
+						pushResult();
 						tokens = [c];
-						action = '';
 						st = 'Start';
 					}
 					break;
@@ -199,11 +197,7 @@
 					if(!rblank.test(c)) {
 						throw Error('There needs a blank after *! pos: ' + i);
 					} else {
-						result.push({
-							action: action,
-							tokens: []
-						})
-						action = '';
+						pushResult();
 						st = 'Start';
 					}
 					break;
@@ -227,14 +221,7 @@
 					} else if(c == '"') {
 						throw Error(c + ' cannot appear here, need identifier at position ' + i);
 					} else if(c == ']') {
-						if(action) {
-							result.push({
-								action: action,
-								tokens: [ tokens.join('') ]
-							})
-							action = '';
-							tokens = [];
-						}
+						action && pushResult();
 						st = 'Start';
 					} else if(tmp = attributeFilters[c]) {
 						tokens = [tokens.join('')];
@@ -301,12 +288,7 @@
 					if(rblank.test(c)) {
 						continue;
 					} else if(c == ']') {
-						result.push({
-							action: action,
-							tokens: tokens
-						})
-						action = '';
-						tokens = [];
+						pushResult();
 						st = 'Start';
 					} else {
 						throw Error('Need a ] at position ' + i);
