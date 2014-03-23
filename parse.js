@@ -91,7 +91,7 @@
 						action = tmp.action;
 					} else if(c == '[') {
 						st = 'NeedAttributeIdentifier';
-						action = '';
+						action = 'has-attribute';
 						tokens = [];
 					} else {
 						throw Error(c + ' is not a valid identifier.')
@@ -108,7 +108,8 @@
 						if(action != 'decendent') {
 							action = 'decendent';
 							result.push({
-								action: action
+								action: action,
+								tokens: []
 							})
 						}
 					} else if((tmp = selectors[c]) || (tmp = combinators[c])) {
@@ -123,7 +124,7 @@
 						action = tmp.action;
 					} else if(c == '[') {
 						st = 'NeedAttributeIdentifier';
-						action = '';
+						action = 'has-attribute';
 						tokens = [];
 					} else {
 						throw Error(c + ' is not a valid identifier.')
@@ -197,6 +198,14 @@
 					} else if(c == '"') {
 						throw Error(c + ' cannot appear here, need identifier at position ' + i);
 					} else if(c == ']') {
+						if(action) {
+							result.push({
+								action: action,
+								tokens: [ tokens.join('') ]
+							})
+							action = '';
+							tokens = [];
+						}
 						st = 'Start';
 					} else if(tmp = attributeFilters[c]) {
 						tokens = [tokens.join('')];
@@ -283,7 +292,8 @@
 				tokens: [tokens.join('')]
 			})
 		}
-		log(result)
+		log(result);
+		return result;
 	}
 
 	window.parse = parse;
