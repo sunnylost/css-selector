@@ -45,79 +45,109 @@
 	<div id="result"></div>
 	<script type="text/javascript">
 		Test('#test .abc', [
-				{
-					action: 'id',
-					tokens: ['test']
-				}, {
-					action: 'decendent',
-					tokens: []
-				}, {
-					action: 'class',
-					tokens: ['abc']
-				}
-			]);
+			{
+				action: 'id',
+				tokens: ['test']
+			}, {
+				action: 'decendent',
+				tokens: []
+			}, {
+				action: 'class',
+				tokens: ['abc']
+			}
+		]);
 
 		Test('#test i', [
-				{
-					action: 'id',
-					tokens: ['test']
-				}, {
-					action: 'decendent',
-					tokens: []
-				}, {
-					action: 'tag',
-					tokens: ['i']
-				}
-			]);
+			{
+				action: 'id',
+				tokens: ['test']
+			}, {
+				action: 'decendent',
+				tokens: []
+			}, {
+				action: 'tag',
+				tokens: ['i']
+			}
+		]);
 
 		Test(' div span .abc', [
-				{
-					action: 'tag',
-					tokens: ['div']
-				}, {
-					action: 'decendent',
-					tokens: []
-				}, {
-					action: 'tag',
-					tokens: ['span']
-				}, {
-					action: 'decendent',
-					tokens: []
-				}, {
-					action: 'class',
-					tokens: ['abc']
-				}
-			]);
+			{
+				action: 'tag',
+				tokens: ['div']
+			}, {
+				action: 'decendent',
+				tokens: []
+			}, {
+				action: 'tag',
+				tokens: ['span']
+			}, {
+				action: 'decendent',
+				tokens: []
+			}, {
+				action: 'class',
+				tokens: ['abc']
+			}
+		]);
 
 		Test('[title^="haha"]', [
-				{
-					action: 'begin-with-attribute',
-					tokens: ['title', 'haha']
-				}
-			]);
+			{
+				action: 'begin-with-attribute',
+				tokens: ['title', 'haha']
+			}
+		]);
 
 		Test('[title="haha"]', [
-				{
-					action: 'equal-attribute',
-					tokens: ['title', 'haha']
-				}
-			]);
+			{
+				action: 'equal-attribute',
+				tokens: ['title', 'haha']
+			}
+		]);
 
 		Test('[title="haha,i\'m a title!lalala~@wuhaha.a]a~~en heng"] i.abc', [
-				{
-					action: 'equal-attribute',
-					tokens: ['title', 'haha,i\'m a title!lalala~@wuhaha.a]a~~en heng']
-				}, {
-					action: 'decendent',
-					tokens: []
-				}, {
-					action: 'tag',
-					tokens: ['i']
-				}, {
-					action: 'class',
-					tokens: ['abc']
-				}
-			]);
+			{
+				action: 'equal-attribute',
+				tokens: ['title', 'haha,i\'m a title!lalala~@wuhaha.a]a~~en heng']
+			}, {
+				action: 'decendent',
+				tokens: []
+			}, {
+				action: 'tag',
+				tokens: ['i']
+			}, {
+				action: 'class',
+				tokens: ['abc']
+			}
+		]);
+
+		Test('[title]', [
+			{
+				action: 'has-attribute',
+				tokens: ['title']
+			}
+		])
+
+		Test('div.foo.bar', [
+			{
+				action: 'tag',
+				tokens: ['div']
+			}, {
+				action: 'class',
+				tokens: ['foo']
+			}, {
+				action: 'class',
+				tokens: ['bar']
+			}
+		])
+
+		Test('* div', [
+			{
+				action: 'find-all',
+				tokens: []
+			}, {
+				action: 'tag',
+				tokens: ['div']
+			}
+		])
 	</script>
 </body>
 </html>

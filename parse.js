@@ -93,6 +93,9 @@
 						st = 'NeedAttributeIdentifier';
 						action = 'has-attribute';
 						tokens = [];
+					} else if(c == '*') {
+						st = 'BlankAfterStar';
+						action = 'find-all';
 					} else {
 						throw Error(c + ' is not a valid identifier.')
 					}
@@ -126,6 +129,9 @@
 						st = 'NeedAttributeIdentifier';
 						action = 'has-attribute';
 						tokens = [];
+					} else if(c == '*') {
+						st = 'BlankAfterStar';
+						action = 'find-all';
 					} else {
 						throw Error(c + ' is not a valid identifier.')
 					}
@@ -153,7 +159,7 @@
 						if(action) {
 							result.push({
 								action: action,
-								tokens: tokens
+								tokens: [tokens.join('')]
 							})
 							tokens = [];
 						}
@@ -174,6 +180,19 @@
 							tokens: []
 						})
 						tokens = [c];
+						action = '';
+						st = 'Start';
+					}
+					break;
+
+				case 'BlankAfterStar':
+					if(!rblank.test(c)) {
+						throw Error('There needs a blank after *! pos: ' + i);
+					} else {
+						result.push({
+							action: action,
+							tokens: []
+						})
 						action = '';
 						st = 'Start';
 					}
