@@ -98,8 +98,6 @@
 						st = 'InIdentifier';
 						action = 'tag';
 						tokens.push(c);
-					} else if(rblank.test(c)) {
-						continue;
 					} else if((tmp = selectors[c])) {
 						st = tmp.next;
 						action = tmp.action;
