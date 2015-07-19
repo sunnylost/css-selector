@@ -31,7 +31,7 @@ class Tokenizer {
         this.tokens        = []
         this.tokenPos      = 0
         this.isThrowError  = true
-        this.isDoubleQuote = this.isSingleQuote = false
+        this.isDoubleQuote = false
     }
 
     check() {
@@ -99,7 +99,7 @@ class Tokenizer {
     //0x22 "
     //0x27 '
     isStringLiteralBegin( ch ) {
-        return ( ch === 0x22 && ( this.isDoubleQuote = true ) ) || ( ch === 0x27 && ( this.isSingleQuote = true ) )
+        return ( ch === 0x22 && ( this.isDoubleQuote = true ) ) || ( ch === 0x27 && ( this.isDoubleQuote = false ) )
     }
 
     scanWhiteSpace() {
@@ -116,7 +116,7 @@ class Tokenizer {
             source   = this.source,
             c, end
 
-        while ( ( c = source[ ++tokenPos ] ) && this.isStringLiteral( c ) );
+        while ( ( c = source[ ++tokenPos ] ) && this.isStringLiteral( c ) ) {}
 
         if ( c !== ( this.isDoubleQuote ? '"' : '\'' ) ) {
             if ( this.isSilence() ) {
@@ -131,7 +131,7 @@ class Tokenizer {
 
         this.tokenPos      = tokenPos + 1
         end                = tokenPos
-        this.isDoubleQuote = this.isSingleQuote = false
+        this.isDoubleQuote = false
 
         return {
             type : TokenType.StringLiteral,
@@ -231,7 +231,7 @@ class Tokenizer {
             start    = tokenPos,
             c
 
-        while ( ( c = source[ tokenPos++ ] ) && rname.test( c ) );
+        while ( ( c = source[ tokenPos++ ] ) && rname.test( c ) ) {}
 
         tokenPos--
 
@@ -280,7 +280,8 @@ class Tokenizer {
             case '^':
             case '$':
             case '*':
-                tokenPos++;
+                tokenPos++
+                this.tokenPos = tokenPos //expect() will use tokenPos, so here need to sync
                 this.expect( '=' )
                 --tokenPos
                 tokens.push( {
@@ -330,8 +331,7 @@ class Tokenizer {
     }
 
     scanPseudoElement() {
-        var tokens   = this.tokens,
-            source   = this.source,
+        var source   = this.source,
             tokenPos = this.tokenPos,
             c        = source[ ++tokenPos ],
             start    = tokenPos - 2,
@@ -342,7 +342,7 @@ class Tokenizer {
 
         switch ( c.toLowerCase() ) {
             case 'a':
-                if ( 'after' === input.slice( tokenPos, tokenPos + 5 ).toLowerCase() ) {
+                if ( 'after' === source.slice( tokenPos, tokenPos + 5 ).toLowerCase() ) {
                     token.value = '::after'
                     token.end   = start + 7
                     tokenPos += 5
@@ -356,7 +356,7 @@ class Tokenizer {
                 break
 
             case 'b':
-                if ( 'before' === input.slice( tokenPos, tokenPos + 6 ).toLowerCase() ) {
+                if ( 'before' === source.slice( tokenPos, tokenPos + 6 ).toLowerCase() ) {
                     token.value = '::before'
                     token.end   = start + 8
                     tokenPos += 6
@@ -374,7 +374,7 @@ class Tokenizer {
                     token.value = '::first-line'
                     token.end   = start + 12
                     tokenPos += 10
-                } else if ( 'first-letter' === input.slice( tokenPos, tokenPos + 12 ).toLowerCase() ) {
+                } else if ( 'first-letter' === source.slice( tokenPos, tokenPos + 12 ).toLowerCase() ) {
                     token.value = '::first-letter'
                     token.end   = start + 14
                     tokenPos += 12
