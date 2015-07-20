@@ -1,24 +1,27 @@
-const nonascii  = '[^\u0000-\u007f]',
-      unicode   = '\\[0-9a-f]{1,6}(\r\n|[ \n\r\t\f])?',
-      escape    = '(' + unicode + ')|\\[^\n\r\f0-9a-f]',
-      nmstart   = '[_a-z]|(' + nonascii + ')|(' + escape + ')',
-      nmchar    = '[_a-z0-9-]|(' + nonascii + ')|(' + escape + ')',
-      iden      = '[-]?(' + nmstart + ')(' + nmchar + ')*',
-      name      = '(' + nmchar + ')+',
-      rname     = new RegExp( name ),
-      rstr      = /(?:[^\n\r\f\\"]|\n|\r\n|\r|\f)/,
-      rnonascii = new RegExp( nonascii ),
-      rescape   = new RegExp( escape ),
+const nonascii               = '[^\u0000-\u007f]',
+      unicode                = '\\[0-9a-f]{1,6}(\r\n|[ \n\r\t\f])?',
+      escape                 = '(' + unicode + ')|\\[^\n\r\f0-9a-f]',
+      nmstart                = '[_a-z]|(' + nonascii + ')|(' + escape + ')',
+      nmchar                 = '[_a-z0-9-]|(' + nonascii + ')|(' + escape + ')',
+      iden                   = '[-]?(' + nmstart + ')(' + nmchar + ')*',
+      name                   = '(' + nmchar + ')+',
+      rname                  = new RegExp( name ),
+      rstr                   = /(?:[^\n\r\f\\"]|\n|\r\n|\r|\f)/,
+      rnonascii              = new RegExp( nonascii ),
+      rescape                = new RegExp( escape ),
 
-      TokenType = {
+      TokenType              = {
           EOF          : 1,
           Identifier   : 2,
           StringLiteral: 3,
           WhiteSpace   : 4,
           Punctuator   : 5,
           PseudoElement: 6,
-          PseudoClass  : 7
-      }
+          PseudoClass  : 7,
+          Namespace    : 8
+      },
+
+      PARENTHESES_NOT_CLOSED = 'parentheses not closed.'
 
 class Tokenizer {
     constructor( source ) {
@@ -26,12 +29,13 @@ class Tokenizer {
             throw Error( 'source cannot be empty.' )
         }
 
-        this.source        = source
-        this.sourceLength  = source.length
-        this.tokens        = []
-        this.tokenPos      = 0
-        this.isThrowError  = true
-        this.isDoubleQuote = false
+        this.source             = source
+        this.sourceLength       = source.length
+        this.tokens             = []
+        this.tokenPos           = 0
+        this.isThrowError       = true
+        this.isDoubleQuote      = false
+        this.parenthesesCounter = 0
     }
 
     check() {
@@ -40,6 +44,9 @@ class Tokenizer {
         while ( token = this.advance() ) {
             this.tokens.push( token )
             if ( token.type === TokenType.EOF ) {
+                if ( this.parenthesesCounter !== 0 ) {
+                    throw Error( PARENTHESES_NOT_CLOSED )
+                }
                 return
             }
         }
@@ -107,7 +114,17 @@ class Tokenizer {
     }
 
     scanIdentifier() {
-        return this.normalScan( Tokenizer.isIdentifier, TokenType.Identifier )
+        let tokens    = this.tokens,
+            prevToken = tokens[ tokens.length - 1 ],
+            token     = this.normalScan( Tokenizer.isIdentifier, TokenType.Identifier )
+
+        if ( prevToken && prevToken.type === TokenType.Namespace ) {
+            prevToken   = tokens.pop()
+            token.start = prevToken.start
+            token.value = prevToken.value + token.value
+        }
+
+        return token
     }
 
     scanStringLiteral() {
@@ -116,7 +133,8 @@ class Tokenizer {
             source   = this.source,
             c, end
 
-        while ( ( c = source[ ++tokenPos ] ) && this.isStringLiteral( c ) ) {}
+        while ( ( c = source[ ++tokenPos ] ) && this.isStringLiteral( c ) ) {
+        }
 
         if ( c !== ( this.isDoubleQuote ? '"' : '\'' ) ) {
             if ( this.isSilence() ) {
@@ -173,12 +191,32 @@ class Tokenizer {
     }
 
     scanPunctuator() {
-        var source            = this.source,
-            tokenPos          = this.tokenPos,
-            tokens            = this.tokens,
-            c                 = source[ tokenPos ]
+        var source   = this.source,
+            tokenPos = this.tokenPos,
+            tokens   = this.tokens,
+            c        = source[ tokenPos ]
 
         switch ( c ) {
+            case '|':
+                let prevToken
+
+                if ( tokens.length ) {
+                    prevToken = tokens.pop()
+                } else {
+                    prevToken = {
+                        start: tokenPos + 1,
+                        end  : tokenPos + 1,
+                        value: ''
+                    }
+                }
+
+                prevToken.type = TokenType.Namespace
+                prevToken.end += 1
+                prevToken.value += '|'
+
+                this.tokenPos++
+                return prevToken
+
             case '#':
             case '.':
                 tokens.push( {
@@ -192,9 +230,12 @@ class Tokenizer {
                 return this.scanName()
 
             case '*':
+            case '>':
+            case '+':
+            case '~':
             case ',':
                 tokenPos++
-                this.tokenPos = tokenPos
+                this.tokenPos  = tokenPos
 
                 return {
                     type : TokenType.Punctuator,
@@ -205,7 +246,7 @@ class Tokenizer {
 
             case '[':
                 tokenPos++
-                this.tokenPos = tokenPos
+                this.tokenPos  = tokenPos
 
                 tokens.push( {
                     type : TokenType.Punctuator,
@@ -218,7 +259,7 @@ class Tokenizer {
 
             case ':':
                 tokenPos++
-                this.tokenPos = tokenPos
+                this.tokenPos  = tokenPos
                 return source[ tokenPos ] === ':' ? this.scanPseudoElement() : this.scanPseudoClass()
         }
 
@@ -231,7 +272,8 @@ class Tokenizer {
             start    = tokenPos,
             c
 
-        while ( ( c = source[ tokenPos++ ] ) && rname.test( c ) ) {}
+        while ( ( c = source[ tokenPos++ ] ) && rname.test( c ) ) {
+        }
 
         tokenPos--
 
@@ -258,11 +300,11 @@ class Tokenizer {
     scanAttribute() {
         this.tokens.push( this.scanName() )
 
-        let tokens   = this.tokens,
-            source   = this.source,
-            tokenPos = this.tokenPos,
-            c        = source[ tokenPos ],
-            start    = tokenPos + 1
+        let tokens            = this.tokens,
+            source            = this.source,
+            tokenPos          = this.tokenPos,
+            c                 = source[ tokenPos ],
+            start             = tokenPos + 1
 
         switch ( c ) {
             case '=':
@@ -421,17 +463,20 @@ class Tokenizer {
 
         len = pseudoClass.length
 
-        if ( source[ ++tokenPos ] === '(' ) {
-            return this.scanFunction( pseudoClass );
-        }
-        --tokenPos
-
         switch ( len ) {
+            case 3:
+                switch ( pseudoClass ) {
+                    case 'not':
+                        isValid = true
+                }
+                break
+
             case 4:
                 switch ( pseudoClass ) {
                     case 'link':
                     case 'past':
                     case 'root':
+                    case 'lang':
                         isValid = true
                 }
                 break
@@ -483,6 +528,7 @@ class Tokenizer {
             case 9:
                 switch ( pseudoClass ) {
                     case 'read-only':
+                    case 'nth-child':
                         isValid = true
                 }
                 break
@@ -501,6 +547,7 @@ class Tokenizer {
                 switch ( pseudoClass ) {
                     case 'active-drop':
                     case 'first-child':
+                    case 'nth-of-type':
                         isValid = true
                 }
                 break
@@ -523,6 +570,20 @@ class Tokenizer {
                 }
                 break
 
+            case 14:
+                switch ( pseudoClass ) {
+                    case 'nth-last-child':
+                        isValid = true
+                }
+                break
+
+            case 16:
+                switch ( pseudoClass ) {
+                    case 'nth-last-of-type':
+                        isValid = true
+                }
+                break
+
             case 17:
                 switch ( pseudoClass ) {
                     case 'placeholder-shown':
@@ -536,12 +597,17 @@ class Tokenizer {
 
         if ( isValid ) {
             this.tokenPos = tokenPos
+            --tokenPos
 
-            return {
+            this.tokens.push( {
                 type : TokenType.PseudoClass,
                 start: tokenPos - pseudoClass.length,
                 end  : tokenPos + 1,
                 value: ':' + pseudoClass
+            } )
+
+            if ( source[ ++tokenPos ] === '(' ) {
+                return this.scanFunction( pseudoClass );
             }
         } else if ( this.isSilence() ) {
             throw Error( `${pseudoClass} is not a valid pseudo class name!` )
@@ -551,7 +617,21 @@ class Tokenizer {
         }
     }
 
+    //TODO
     scanFunction() {
+        let tokenPos = this.tokenPos,
+            source   = this.source,
+            c        = source[ tokenPos ]
+
+        if ( c === '(' ) {
+            this.parenthesesCounter++
+        } else if ( c === ')' ) {
+            if ( !this.parenthesesCounter ) {
+                throw Error( PARENTHESES_NOT_CLOSED )
+            }
+
+            this.parenthesesCounter--
+        }
         //TODO
     }
 
