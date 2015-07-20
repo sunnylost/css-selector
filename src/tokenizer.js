@@ -234,8 +234,20 @@ class Tokenizer {
             case '+':
             case '~':
             case ',':
+            case '(':
+            case ')':
                 tokenPos++
                 this.tokenPos  = tokenPos
+
+                if ( c === '(' ) {
+                    this.parenthesesCounter++
+                } else if ( c === ')' ) {
+                    if ( !this.parenthesesCounter ) {
+                        throw Error( PARENTHESES_NOT_CLOSED )
+                    }
+
+                    this.parenthesesCounter--
+                }
 
                 return {
                     type : TokenType.Punctuator,
@@ -599,15 +611,11 @@ class Tokenizer {
             this.tokenPos = tokenPos
             --tokenPos
 
-            this.tokens.push( {
+            return {
                 type : TokenType.PseudoClass,
                 start: tokenPos - pseudoClass.length,
                 end  : tokenPos + 1,
                 value: ':' + pseudoClass
-            } )
-
-            if ( source[ ++tokenPos ] === '(' ) {
-                return this.scanFunction( pseudoClass );
             }
         } else if ( this.isSilence() ) {
             throw Error( `${pseudoClass} is not a valid pseudo class name!` )
@@ -615,24 +623,6 @@ class Tokenizer {
             //TODO
             //return errorToken(tokPos - pseudoClass.length)
         }
-    }
-
-    //TODO
-    scanFunction() {
-        let tokenPos = this.tokenPos,
-            source   = this.source,
-            c        = source[ tokenPos ]
-
-        if ( c === '(' ) {
-            this.parenthesesCounter++
-        } else if ( c === ')' ) {
-            if ( !this.parenthesesCounter ) {
-                throw Error( PARENTHESES_NOT_CLOSED )
-            }
-
-            this.parenthesesCounter--
-        }
-        //TODO
     }
 
     expect( c ) {
