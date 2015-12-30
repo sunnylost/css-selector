@@ -1,5 +1,5 @@
 var should    = require( 'should' ),
-    Tokenizer = require( '../build/tokenizer' )
+    Tokenizer = require( '../build/tokenizer' ).default
 
 function prepare( selector ) {
     var t = new Tokenizer( selector )
